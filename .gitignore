@@ -113,3 +113,8 @@ desktop.ini
 *.cache
 *.temp
 .temp/
+
+# Packaging
+build_package.bat
+dist_package/
+exclude_list.txt

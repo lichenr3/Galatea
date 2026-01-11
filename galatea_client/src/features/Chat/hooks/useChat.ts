@@ -41,6 +41,20 @@ export const useChat = () => {
     currentCharacterIdRef.current = currentCharacterId;
   }, [activeSessionId, sessions, currentCharacterId]);
   
+  // 将当前角色移到通讯录顶部（本地排序）
+  const moveCurrentCharacterToTop = useCallback(() => {
+    const charId = currentCharacterIdRef.current;
+    if (!charId) return;
+    
+    setContacts(prev => {
+      const activeChar = prev.find(c => c.characterId === charId);
+      if (!activeChar) return prev;
+      
+      const others = prev.filter(c => c.characterId !== charId);
+      return [activeChar, ...others];
+    });
+  }, []);
+  
   // 加载历史会话
   useEffect(() => {
     const loadContacts = async () => {
@@ -55,6 +69,14 @@ export const useChat = () => {
     };
     
     loadContacts();
+    
+    // 定期同步后端数据（每30秒）
+    const syncInterval = setInterval(() => {
+      console.log('🔄 定期同步通讯录...');
+      loadContacts();
+    }, 30000);
+    
+    return () => clearInterval(syncInterval);
   }, [language]); // 依赖语言，当语言改变时重新加载
 
   // 初始化 WebSocket（只在组件挂载时执行一次）
@@ -371,9 +393,14 @@ export const useChat = () => {
       c.sessions.some(s => s.sessionId === sessionId)
     )?.characterId;
     
+    // 🔧 立即更新 currentCharacterId（不等待 TTS）
+    if (newCharacterId) {
+      setCurrentCharacterId(newCharacterId);
+    }
+    
     const prevCharacterId = currentCharacterIdRef.current;
     
-    // 🆕 如果角色发生变化，切换 TTS 模型
+    // 🆕 如果角色发生变化，切换 TTS 模型（异步，不阻塞）
     if (newCharacterId && newCharacterId !== prevCharacterId) {
       console.log('🎤 检测到角色切换:', {
         从: prevCharacterId,
@@ -384,7 +411,6 @@ export const useChat = () => {
       switchTTSModel(newCharacterId).then(success => {
         if (success) {
           console.log('✅ TTS 模型已切换到:', newCharacterId);
-          setCurrentCharacterId(newCharacterId);
         } else {
           console.warn('⚠️  TTS 模型切换失败，但不影响使用');
         }
@@ -393,28 +419,28 @@ export const useChat = () => {
       });
     }
     
-    // 自动删除空会话逻辑
-    if (prevSessionId && prevSessionId !== sessionId) {
-      const prevSession = sessionsRef.current[prevSessionId];
-      // 如果前一个会话存在且没有消息，则自动删除
-      if (prevSession && prevSession.messages.length === 0) {
-        console.log('🗑️ 自动删除空会话:', prevSessionId);
-        // 不等待删除完成，直接继续切换，避免UI卡顿
-        deleteSession(prevSessionId).catch(e => console.error('Auto-delete failed', e));
-        
-        // 更新 UI 状态移除该会话
-        setContacts(prev => prev.map(char => ({
-          ...char,
-          sessions: char.sessions.filter(s => s.sessionId !== prevSessionId)
-        })).filter(char => char.sessions.length > 0));
-        
-        setSessions(prev => {
-          const next = { ...prev };
-          delete next[prevSessionId];
-          return next;
-        });
-      }
-    }
+    // 自动删除空会话逻辑 (已禁用 - 保留空会话)
+    // if (prevSessionId && prevSessionId !== sessionId) {
+    //   const prevSession = sessionsRef.current[prevSessionId];
+    //   // 如果前一个会话存在且没有消息，则自动删除
+    //   if (prevSession && prevSession.messages.length === 0) {
+    //     console.log('🗑️ 自动删除空会话:', prevSessionId);
+    //     // 不等待删除完成，直接继续切换，避免UI卡顿
+    //     deleteSession(prevSessionId).catch(e => console.error('Auto-delete failed', e));
+    //     
+    //     // 更新 UI 状态移除该会话
+    //     setContacts(prev => prev.map(char => ({
+    //       ...char,
+    //       sessions: char.sessions.filter(s => s.sessionId !== prevSessionId)
+    //     })).filter(char => char.sessions.length > 0));
+    //     
+    //     setSessions(prev => {
+    //       const next = { ...prev };
+    //       delete next[prevSessionId];
+    //       return next;
+    //     });
+    //   }
+    // }
 
     setActiveSessionId(sessionId);
     
@@ -483,6 +509,9 @@ export const useChat = () => {
 
     // 更新联系人最后消息
     updateContactLastMessage(currentSessionId, text);
+    
+    // 立即将当前角色移到通讯录顶部（前端本地排序，无需等待后端）
+    moveCurrentCharacterToTop();
 
     // 发送给后端（带上 session_id 和 enable_audio）
     const messageToSend = {
@@ -496,7 +525,7 @@ export const useChat = () => {
     };
     console.log('📡 发送消息到后端:', messageToSend);
     webSocketService.sendMessage(messageToSend);
-  }, []);
+  }, [moveCurrentCharacterToTop]);
 
   // 自动选中第一个会话（如果当前没有选中且有会话）
   useEffect(() => {

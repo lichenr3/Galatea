@@ -6,7 +6,7 @@ echo   Galatea - Installation Script
 echo ========================================
 echo.
 
-python --version >nul 2>&1
+py --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found! Please install Python 3.13+
     echo Download from: https://www.python.org/downloads/
@@ -30,7 +30,7 @@ cd galatea_server
 
 where uv >nul 2>&1
 if not errorlevel 1 (
-    echo Using uv (recommended)...
+    echo Using uv - recommended...
     uv sync
 ) else (
     echo Using pip...
@@ -38,7 +38,7 @@ if not errorlevel 1 (
     
     if not exist .venv (
         echo Creating virtual environment...
-        python -m venv .venv
+        py -m venv .venv
     )
     
     call .venv\Scripts\activate.bat

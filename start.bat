@@ -65,11 +65,21 @@ cd galatea_client
 start "Galatea Client" cmd /c "npm run dev"
 cd ..
 
+set "BACKEND_PORT=8000"
+if exist "galatea_server\.env" (
+    for /f "tokens=2 delims==" %%a in ('findstr /i "^PORT=" galatea_server\.env') do set "BACKEND_PORT=%%a"
+)
+
+set "FRONTEND_PORT=5137"
+if exist "galatea_client\.env" (
+    for /f "tokens=2 delims==" %%a in ('findstr /i "^VITE_PORT=" galatea_client\.env') do set "FRONTEND_PORT=%%a"
+)
+
 echo.
 echo ========================================
 echo   Galatea is running!
-echo   Backend: http://localhost:8000
-echo   Frontend: http://localhost:5137
+echo   Backend: http://localhost:%BACKEND_PORT%
+echo   Frontend: http://localhost:%FRONTEND_PORT%
 echo ========================================
 echo.
 echo Press any key to stop...

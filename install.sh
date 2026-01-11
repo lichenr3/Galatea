@@ -1,5 +1,5 @@
 #!/bin/bash
-# Galatea Installation Script for Linux/Mac
+cd "$(dirname "$0")"
 
 echo "========================================"
 echo "  Galatea - Installation Script"
@@ -8,32 +8,46 @@ echo ""
 
 # Check Python
 if ! command -v python3 &> /dev/null; then
-    echo "[ERROR] Python 3 not found! Please install Python 3.13+"
+    echo "[ERROR] Python not found! Please install Python 3.13+"
+    echo "Download from: https://www.python.org/downloads/"
     exit 1
 fi
-echo "[OK] Python found: $(python3 --version)"
+echo "[OK] Python found"
 
 # Check Node.js
 if ! command -v node &> /dev/null; then
     echo "[ERROR] Node.js not found! Please install Node.js 18+"
+    echo "Download from: https://nodejs.org/"
     exit 1
 fi
-echo "[OK] Node.js found: $(node --version)"
+echo "[OK] Node.js found"
 echo ""
 
 # Install Backend Dependencies
 echo "[1/2] Installing Backend Dependencies..."
 cd galatea_server
 
-# Check if uv is available
 if command -v uv &> /dev/null; then
-    echo "Using uv (recommended)..."
+    echo "Using uv - recommended..."
     uv sync
 else
     echo "Using pip..."
     echo "Tip: Install uv for better dependency management: pip install uv"
-    pip3 install -e .
+    
+    if [ ! -d ".venv" ]; then
+        echo "Creating virtual environment..."
+        python3 -m venv .venv
+    fi
+    
+    source .venv/bin/activate
+    pip install -e .
 fi
+
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Backend dependency installation failed!"
+    exit 1
+fi
+
 cd ..
 echo "[OK] Backend dependencies installed"
 echo ""
@@ -42,12 +56,17 @@ echo ""
 echo "[2/2] Installing Frontend Dependencies..."
 cd galatea_client
 npm install
+
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Frontend dependency installation failed!"
+    exit 1
+fi
+
 cd ..
 echo "[OK] Frontend dependencies installed"
 echo ""
 
-# Check .env files
-echo ""
+# Check configuration files
 echo "Checking configuration files..."
 if [ ! -f "galatea_server/.env" ]; then
     echo "[!] galatea_server/.env not found - Please configure it"
@@ -87,4 +106,3 @@ echo "Next steps:"
 echo "  1. Make sure galatea_server/.env is configured"
 echo "  2. Run: ./start.sh"
 echo ""
-

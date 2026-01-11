@@ -33,17 +33,17 @@ Galatea uses a **three-tier architecture** with real-time communication:
 │                 │◄──────────────────────────►│                 │
 │  Galatea Client │         REST API           │ Galatea Server  │
 │   (Electron +   │◄──────────────────────────►│   (FastAPI)     │
-│      React)     │                             │                 │
-└─────────────────┘                             └────────┬────────┘
-                                                         │
-                                                         │ WebSocket
-                                                         │
-                                                ┌────────▼────────┐
-                                                │                 │
-                                                │  Galatea Unity  │
-                                                │  (Unity 3D)     │
-                                                │                 │
-                                                └─────────────────┘
+│      React)     │                            │                 │
+└─────────────────┘                            └────────┬────────┘
+                                                        │
+                                                        │ WebSocket
+                                                        │
+                                               ┌────────▼────────┐
+                                               │                 │
+                                               │  Galatea Unity  │
+                                               │  (Unity 3D)     │
+                                               │                 │
+                                               └─────────────────┘
 ```
 
 #### Component Details
@@ -259,17 +259,17 @@ Galatea 采用 **三端实时通信架构**：
 │                 │◄──────────────────────────►│                 │
 │  Galatea Client │         REST API           │ Galatea Server  │
 │   (Electron +   │◄──────────────────────────►│   (FastAPI)     │
-│      React)     │                             │                 │
-└─────────────────┘                             └────────┬────────┘
-                                                         │
-                                                         │ WebSocket
-                                                         │
-                                                ┌────────▼────────┐
-                                                │                 │
-                                                │  Galatea Unity  │
-                                                │  (Unity 3D)     │
-                                                │                 │
-                                                └─────────────────┘
+│      React)     │                            │                 │
+└─────────────────┘                            └────────┬────────┘
+                                                        │
+                                                        │ WebSocket
+                                                        │
+                                               ┌────────▼────────┐
+                                               │                 │
+                                               │  Galatea Unity  │
+                                               │  (Unity 3D)     │
+                                               │                 │
+                                               └─────────────────┘
 ```
 
 #### 组件详解
@@ -314,7 +314,7 @@ Galatea 采用 **三端实时通信架构**：
 
 #### 前置要求
 
-- **Python**：3.10 或更高版本
+- **Python**：3.13 或更高版本
 - **Node.js**：16.x 或更高版本
 - **uv**：Python 包管理器（可选但推荐，`pip install uv`）
 - **npm**：Node.js 包管理器（随 Node.js 自带）

@@ -34,8 +34,8 @@ export const ChatLayout: React.FC = () => {
   const [isUnityLoading, setIsUnityLoading] = useState(false);
   const [isUnityLaunched, setIsUnityLaunched] = useState(false);
   
-  // 音频开关状态
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  // 音频开关状态（默认关闭）
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   // 🆕 桌宠模式状态 (从 localStorage 读取以实现持久化)
   const [isPetMode, setIsPetMode] = useState(() => {
