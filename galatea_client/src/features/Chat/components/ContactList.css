@@ -1,0 +1,278 @@
+.contact-list {
+  width: 260px;
+  background: #09090b; /* Zinc 950 - Darker sidebar */
+  border-right: 1px solid #27272a;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.contact-header {
+  height: 64px;
+  min-height: 64px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: none; /* Remove border */
+}
+
+.contact-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.new-chat-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  color: #ECECF1;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.new-chat-btn:hover {
+  background-color: #27272a;
+}
+
+.add-contact-btn {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-contact-btn:hover {
+  background-color: #27272a;
+  color: #ECECF1;
+}
+
+.contacts-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.contacts-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.contacts-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.contacts-scroll::-webkit-scrollbar-thumb {
+  background-color: #27272a;
+  border-radius: 2px;
+}
+
+/* Character Group */
+.character-group {
+  margin-bottom: 16px;
+}
+
+.character-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #a1a1aa;
+  transition: color 0.2s;
+}
+
+.character-header:hover {
+  color: #ECECF1;
+}
+
+.char-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contact-avatar.small {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #18181b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Ensure fallback is positioned correctly */
+}
+
+.contact-avatar.small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 2; /* Ensure image is above fallback */
+}
+
+.avatar-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #ECECF1;
+  z-index: 1;
+}
+
+.char-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chevron {
+  color: #71717a;
+  transition: transform 0.2s;
+}
+
+.chevron.expanded {
+  transform: rotate(180deg);
+}
+
+/* Sessions List */
+.sessions-list {
+  margin-top: 4px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  margin-bottom: 2px; /* Separate items */
+  margin-left: 12px; /* Indent for hierarchy */
+  border: none; /* Remove border */
+  border-radius: 12px; /* Rounded corners */
+  cursor: pointer;
+  color: #a1a1aa;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.session-item:last-child {
+  margin-bottom: 0;
+}
+
+.session-item:hover {
+  background-color: #27272a;
+  color: #ECECF1;
+}
+
+.session-item.active {
+  background-color: #27272a;
+  color: #ECECF1;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+
+.session-preview {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Menu Button */
+.session-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.menu-btn {
+  opacity: 0;
+  background: transparent;
+  border: none;
+  color: #71717a;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.session-item:hover .menu-btn,
+.session-item.active .menu-btn {
+  opacity: 1;
+}
+
+.menu-btn:hover {
+  color: #ECECF1;
+  background-color: #3f3f46;
+}
+
+/* Dropdown Menu */
+.session-menu-dropdown {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: #ECECF1;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.menu-item:hover {
+  background-color: #3f3f46;
+}
+
+.menu-item.delete {
+  color: #ef4444;
+}
+
+.menu-item.delete:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Loading state */
+.loading-contacts {
+  padding: 20px;
+  text-align: center;
+  color: #71717a;
+  font-size: 13px;
+}
+

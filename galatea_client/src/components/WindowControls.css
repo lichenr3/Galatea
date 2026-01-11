@@ -1,0 +1,37 @@
+.window-controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.win-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 6px;
+  padding: 0;
+}
+
+.win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ECECF1;
+}
+
+.win-btn.close:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.win-btn svg {
+  pointer-events: none;
+}

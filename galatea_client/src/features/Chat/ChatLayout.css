@@ -1,0 +1,403 @@
+.chat-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: #18181b; 
+  color: #ECECF1;
+  overflow: hidden;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+/* 桌宠模式：背景全透明 */
+.chat-layout.pet-mode {
+  background-color: transparent !important;
+  padding-top: 0; /* 桌宠模式不需要标题栏空间 */
+}
+
+/* 聊天主区域 */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  background-color: transparent;
+}
+
+/* 桌宠模式下的主区域 */
+.chat-layout.pet-mode .chat-main {
+  flex: none;
+  width: 320px;
+  margin-left: auto;
+  padding: 5px;
+}
+
+/* 标题栏 */
+.chat-header {
+  height: 64px;
+  min-height: 64px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #18181b;
+  -webkit-app-region: drag;
+}
+
+.lang-dropdown-container {
+  position: relative;
+  display: inline-block;
+  -webkit-app-region: no-drag;
+}
+
+.lang-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lang-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.chevron-icon {
+  transition: transform 0.2s;
+}
+
+.chevron-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  min-width: 100px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lang-menu-item {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  padding: 10px 16px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.lang-menu-item.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #a1a1aa;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.online {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.offline {
+  background-color: #ef4444;
+}
+
+.chat-layout.pet-mode .chat-header {
+  height: 5px;
+  min-height: 5px;
+  background-color: transparent !important;
+  -webkit-app-region: no-drag;
+}
+
+.chat-layout.pet-mode .header-left,
+.chat-layout.pet-mode .header-right {
+  display: none; 
+}
+
+/* 消息列表 */
+.chat-layout:not(.pet-mode) .messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* ✅ 桌宠模式消息列表：极致紧凑 */
+.chat-layout.pet-mode .messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px 10px 0 10px;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+  cursor: move;
+  /* ✅ 顶部渐变：配合 360px 高度，让消息在靠近顶部 20% 处消失 */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+  scrollbar-width: none;
+}
+
+.chat-layout.pet-mode .messages-list::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-layout.pet-mode .messages-list > :first-child {
+  margin-top: auto !important;
+}
+
+/* 气泡包裹器 */
+.chat-layout.pet-mode .chat-bubble-wrapper {
+  margin-bottom: 3px; /* ✅ 间距从 6px 进一步压缩到 3px */
+  pointer-events: auto;
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+/* 气泡内容 */
+.chat-layout.pet-mode .bubble-content {
+  -webkit-app-region: no-drag;
+  cursor: text;
+}
+
+/* 输入区域 */
+.input-area {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.chat-layout.pet-mode .input-area {
+  padding: 0 10px 10px 10px; /* ✅ 顶部 Padding 设为 0，让输入框贴着消息 */
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.input-container {
+  width: 100%;
+  max-width: 680px;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.chat-layout.pet-mode .input-container {
+  background: #FFFFFF !important;
+  border: none;
+  border-radius: 16px; /* ✅ 稍微减小圆角，配合紧凑感 */
+  padding: 6px 10px;   /* ✅ 压缩垂直 Padding 从 10px 降到 6px */
+  -webkit-app-region: no-drag;
+}
+
+.chat-input {
+  background: transparent;
+  border: none;
+  color: #ECECF1;
+  font-size: 15px;
+  padding: 8px 12px;
+  outline: none;
+  width: 100%;
+}
+
+.chat-layout.pet-mode .chat-input {
+  color: #1a1a1a !important;
+  font-size: 14px;
+}
+
+/* 工具栏 */
+.input-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px; /* ✅ 工具栏间距也压缩一下 */
+}
+
+.toolbar-left, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-btn, .send-btn {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.chat-layout:not(.pet-mode) .tool-btn.active {
+  background-color: #ECECF1 !important;
+  color: #18181b !important;
+}
+
+.chat-layout.pet-mode .tool-btn.active {
+  background-color: #1a1a1a !important;
+  color: #FFFFFF !important;
+}
+
+.tool-btn:disabled, .send-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.tool-btn:hover:not(:disabled) { background-color: rgba(128, 128, 128, 0.1); }
+.tool-btn svg { width: 20px; height: 20px; }
+
+/* 滚动条（正常模式可用） */
+.chat-layout:not(.pet-mode) .messages-list::-webkit-scrollbar { width: 4px; }
+.chat-layout:not(.pet-mode) .messages-list::-webkit-scrollbar-thumb {
+  background-color: rgba(128,128,128,0.2);
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------- */
+/* ✅ 悬浮球（最小化）模式 */
+/* ---------------------------------------------------------------- */
+
+.floating-ball-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-ball {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(15, 15, 20, 0.95);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  -webkit-app-region: drag; /* ✅ 整个圆球负责拖拽 */
+  transition: transform 0.2s;
+}
+
+.floating-ball:hover {
+  transform: scale(1.02);
+}
+
+.ball-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  pointer-events: none; /* 让鼠标事件穿过内容到达 drag 区域 */
+}
+
+/* 🆕 专门的展开按钮：必须是 no-drag 才能接收点击 */
+.ball-restore-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-app-region: no-drag; /* ✅ 关键：确保可点击 */
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+
+.ball-restore-btn:hover {
+  background: #ffffff;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.ball-content img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ball-icon {
+  font-size: 24px;
+}
+
+.ball-status-dot {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  background-color: #10b981;
+  border: 2px solid #000;
+  border-radius: 50%;
+}
