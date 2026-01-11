@@ -144,30 +144,6 @@ Download the pre-built package from [GitHub Releases](https://github.com/YOUR_US
    - Server runs on `http://localhost:8000`
    - Unity client (if included) launches via the UI button
 
-#### For Developers (Build from Source)
-
-If you want to contribute or customize the code, clone the repository. Note that you'll need to add character assets separately as they are not included in the repository.
-
-```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/ai_Galatea.git
-cd ai_Galatea
-
-# Install dependencies
-install.bat  # Windows
-./install.sh # Linux/macOS
-
-# Add character assets (models, voices, configs)
-# Place them in galatea_server/app/characters/
-
-# Configure and start
-cd galatea_server
-cp .env.example .env
-# Edit .env
-cd ..
-start.bat  # or ./start.sh
-```
-
 ---
 
 ### Usage Guide
@@ -227,6 +203,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **GPT-SoVITS** for TTS capabilities
 - **OVR Lip Sync** for lip-sync functionality
+- **MMD4Mecanim** for PMX model import and animation support
 
 ---
 
@@ -370,30 +347,6 @@ Galatea 采用 **三端实时通信架构**：
    - 服务器运行在 `http://localhost:8000`
    - Unity 客户端（如果包含）通过 UI 按钮启动
 
-#### 开发者构建（从源码）
-
-如果你想贡献代码或自定义功能，可以克隆仓库。注意需要单独添加角色资源，因为仓库中不包含这些文件。
-
-```bash
-# 克隆仓库
-git clone https://github.com/YOUR_USERNAME/ai_Galatea.git
-cd ai_Galatea
-
-# 安装依赖
-install.bat  # Windows
-./install.sh # Linux/macOS
-
-# 添加角色资源（模型、语音、配置）
-# 放置到 galatea_server/app/characters/ 目录
-
-# 配置并启动
-cd galatea_server
-cp .env.example .env
-# 编辑 .env
-cd ..
-start.bat  # 或 ./start.sh
-```
-
 ---
 
 ### 使用指南
@@ -457,3 +410,4 @@ start.bat  # 或 ./start.sh
 
 - **GPT-SoVITS** 提供 TTS 能力
 - **OVR Lip Sync** 提供口型同步功能
+- **MMD4Mecanim** 提供 PMX 模型导入和动画支持
