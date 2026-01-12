@@ -17,9 +17,7 @@
 - **AI-Powered Conversations**: Context-aware dialogue powered by advanced language models
 - **3D Character Visualization**: Real-time character rendering and animation in Unity
 - **Text-to-Speech (TTS)**: Natural voice synthesis using GPT-SoVITS
-- **Multi-language Support**: Seamless switching between Chinese and English
-- **Pet Mode**: Minimalist floating window for unobtrusive interaction
-- **Hot Character Swapping**: Switch between characters without restarting Unity
+- **Desktop Pet Mode**: Minimalist floating window for unobtrusive interaction
 - **Session Management**: Organize conversations by character
 
 ---
@@ -211,9 +209,7 @@ This project is licensed under the [MIT License](LICENSE).
 - **AI 智能对话**：基于大语言模型的上下文感知对话
 - **3D 角色可视化**：Unity 实时渲染角色动画
 - **语音合成 (TTS)**：使用 GPT-SoVITS 的自然语音合成
-- **多语言支持**：中英文无缝切换
 - **桌宠模式**：极简悬浮窗，不影响其他工作
-- **角色热切换**：无需重启 Unity 即可切换角色
 - **会话管理**：按角色组织对话记录
 
 ---
