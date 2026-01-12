@@ -88,6 +88,7 @@ Galatea uses a **three-tier architecture** with real-time communication:
 
 #### Prerequisites
 
+- **Operating System**: Windows 10 or higher
 - **Python**: 3.13 or higher
 - **Node.js**: 16.x or higher
 - **uv**: Python package manager (optional but recommended, `pip install uv`)
@@ -107,12 +108,7 @@ Download the pre-built package from [GitHub Releases](https://github.com/YOUR_US
 
 2. **Install dependencies (automated)**
    ```bash
-   # Windows
    install.bat
-   
-   # Linux/macOS
-   chmod +x install.sh
-   ./install.sh
    ```
    
    The script will automatically:
@@ -131,12 +127,7 @@ Download the pre-built package from [GitHub Releases](https://github.com/YOUR_US
 4. **Start the application**
    ```bash
    cd ..
-   
-   # Windows
    start.bat
-   
-   # Linux/macOS
-   ./start.sh
    ```
 
 5. **Access**
@@ -291,6 +282,7 @@ Galatea 采用 **三端实时通信架构**：
 
 #### 前置要求
 
+- **操作系统**：Windows 10 或更高版本
 - **Python**：3.13 或更高版本
 - **Node.js**：16.x 或更高版本
 - **uv**：Python 包管理器（可选但推荐，`pip install uv`）
@@ -310,12 +302,7 @@ Galatea 采用 **三端实时通信架构**：
 
 2. **自动安装依赖**
    ```bash
-   # Windows
    install.bat
-   
-   # Linux/macOS
-   chmod +x install.sh
-   ./install.sh
    ```
    
    脚本会自动完成：
@@ -334,12 +321,7 @@ Galatea 采用 **三端实时通信架构**：
 4. **启动应用**
    ```bash
    cd ..
-   
-   # Windows
    start.bat
-   
-   # Linux/macOS
-   ./start.sh
    ```
 
 5. **访问**
