@@ -69,14 +69,6 @@ export const useChat = () => {
     };
     
     loadContacts();
-    
-    // 定期同步后端数据（每30秒）
-    const syncInterval = setInterval(() => {
-      console.log('🔄 定期同步通讯录...');
-      loadContacts();
-    }, 30000);
-    
-    return () => clearInterval(syncInterval);
   }, [language]); // 依赖语言，当语言改变时重新加载
 
   // 初始化 WebSocket（只在组件挂载时执行一次）

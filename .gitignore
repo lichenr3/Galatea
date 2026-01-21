@@ -118,3 +118,8 @@ desktop.ini
 build_package.bat
 dist_package/
 exclude_list.txt
+
+# ================================
+# Documentation
+# ================================
+TECH_STACK_SUMMARY.md

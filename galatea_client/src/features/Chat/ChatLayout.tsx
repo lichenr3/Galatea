@@ -37,17 +37,11 @@ export const ChatLayout: React.FC = () => {
   // 音频开关状态（默认关闭）
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
-  // 🆕 桌宠模式状态 (从 localStorage 读取以实现持久化)
-  const [isPetMode, setIsPetMode] = useState(() => {
-    const saved = localStorage.getItem('isPetMode');
-    return saved === 'true';
-  });
+  // 🆕 桌宠模式状态 (每次启动都使用默认值 false)
+  const [isPetMode, setIsPetMode] = useState(false);
 
-  // 🆕 最小化（收起）状态
-  const [isMinimized, setIsMinimized] = useState(() => {
-    const saved = localStorage.getItem('isMinimized');
-    return saved === 'true';
-  });
+  // 🆕 最小化（收起）状态 (每次启动都使用默认值 false)
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // 同步窗口尺寸的辅助函数
   const syncWindowSize = (petMode: boolean, minimized: boolean) => {
@@ -64,8 +58,6 @@ export const ChatLayout: React.FC = () => {
 
   // 页面加载时或模式切换时同步尺寸
   useEffect(() => {
-    localStorage.setItem('isPetMode', isPetMode.toString());
-    localStorage.setItem('isMinimized', isMinimized.toString());
     syncWindowSize(isPetMode, isMinimized);
   }, [isPetMode, isMinimized]);
 
