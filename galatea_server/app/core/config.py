@@ -18,6 +18,7 @@ class Settings:
     CHARACTERS_DIR: Path = BASE_DIR / "app" / "characters"
     PROMPTS_DIR: Path = BASE_DIR / "app" / "prompts"
     LOGS_DIR: Path = BASE_DIR / "logs"
+    DATA_DIR: Path = BASE_DIR / "data"
 
     # TTS Service settings
     TTS_API_HOST: str = os.getenv("TTS_API_HOST", "http://127.0.0.1")
@@ -31,6 +32,25 @@ class Settings:
 
     # Unity settings
     UNITY_EXE_PATH: str = os.getenv("UNITY_EXE_PATH", "../galatea_unity/Build/galatea.exe")
+
+    # Memory settings (向量数据库)
+    MEMORY_BACKEND: str = os.getenv("MEMORY_BACKEND", "chroma")  # chroma | qdrant | none
+    CHROMA_PERSIST_DIR: Path = Path(os.getenv("CHROMA_PERSIST_DIR", str(BASE_DIR / "data" / "chroma")))
+
+    # LangGraph Checkpoint settings (会话状态持久化)
+    CHECKPOINT_BACKEND: str = os.getenv("CHECKPOINT_BACKEND", "postgres")  # memory | sqlite | postgres
+    CHECKPOINT_DB_PATH: Path = Path(os.getenv("CHECKPOINT_DB_PATH", str(BASE_DIR / "data" / "checkpoints" / "langgraph.db")))
+
+    # Database settings (PostgreSQL)
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/galatea"
+    )
+    # 同步版本的 URL（用于 Alembic 迁移）
+    DATABASE_URL_SYNC: str = os.getenv(
+        "DATABASE_URL_SYNC",
+        "postgresql://postgres:postgres@localhost:5432/galatea"
+    )
 
     # CORS settings
     CORS_ORIGINS: list = [

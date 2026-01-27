@@ -33,6 +33,9 @@ logs/
 *.log
 galatea_server/logs/
 
+# Data (向量数据库、Checkpoints)
+galatea_server/data/
+
 # Test files
 galatea_server/test_output.*
 galatea_server/*.wav
