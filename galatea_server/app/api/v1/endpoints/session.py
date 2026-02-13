@@ -2,10 +2,15 @@ from app.services.session_service import *
 from app.schemas.session import *
 from app.schemas.common import UnifiedResponse
 from fastapi import APIRouter, Depends
-from app.api.deps import get_session_manager, get_character_registry, get_unity_manager
+from app.api.deps import (
+    get_session_manager, get_character_registry, get_unity_manager,
+    get_session_repo, get_message_repo,
+)
 from app.infrastructure.managers.session_manager import SessionManager
 from app.infrastructure.managers.character_registry import CharacterRegistry
 from app.infrastructure.managers.unity_connection import UnityConnectionManager
+from app.repositories.session_repo import SessionRepository
+from app.repositories.message_repo import MessageRepository
 
 router = APIRouter()
 
@@ -15,7 +20,9 @@ async def create_session_endpoint(
     request: CreateSessionRequest,
     session_manager: SessionManager = Depends(get_session_manager),
     character_registry: CharacterRegistry = Depends(get_character_registry),
-    unity_manager: UnityConnectionManager = Depends(get_unity_manager)
+    unity_manager: UnityConnectionManager = Depends(get_unity_manager),
+    session_repo: SessionRepository = Depends(get_session_repo),
+    message_repo: MessageRepository = Depends(get_message_repo),
 ):
     """创建新会话的端点"""
     try:
@@ -23,22 +30,26 @@ async def create_session_endpoint(
             request=request,
             session_manager=session_manager,
             character_registry=character_registry,
-            unity_manager=unity_manager
+            unity_manager=unity_manager,
+            session_repo=session_repo,
+            message_repo=message_repo,
         )
     except Exception as e:
         raise e
 
 
 @router.delete("/delete/{session_id}", response_model=UnifiedResponse)   
-def delete_session_endpoint(
+async def delete_session_endpoint(
     session_id: str,
-    session_manager: SessionManager = Depends(get_session_manager)
+    session_manager: SessionManager = Depends(get_session_manager),
+    session_repo: SessionRepository = Depends(get_session_repo),
 ):
     """删除会话的端点"""
     try:
-        return delete_session_service(
+        return await delete_session_service(
             session_id=session_id,
-            session_manager=session_manager
+            session_manager=session_manager,
+            session_repo=session_repo,
         )
     except Exception as e:
         raise e

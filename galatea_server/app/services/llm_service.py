@@ -67,7 +67,3 @@ class LLMService:
         except Exception as e:
             logger.error(f"❌ LLM 调用错误: {e}", exc_info=True)
             yield f"[系统错误: {str(e)}]"
-
-
-# 单例导出
-llm_service = LLMService()

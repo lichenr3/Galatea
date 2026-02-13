@@ -153,6 +153,42 @@ class SessionManager:
         
         logger.info(f"🗑️ 删除会话: {session_id} (角色: {character_id})")
     
+    def load_session(
+        self,
+        session_id: str,
+        character_id: str,
+        messages: List[Dict[str, str]],
+        created_at: Optional[datetime] = None,
+        last_active: Optional[datetime] = None,
+    ) -> ChatSession:
+        """
+        从持久化存储恢复会话到内存。
+        用于 app 启动时从数据库加载已有会话。
+        
+        注意：调用方应按 last_active DESC 顺序调用此方法，
+        这样最先调用的（最近的）会话会在排序结构中排在最前面。
+        """
+        session = ChatSession(
+            session_id=session_id,
+            character=character_id,
+            history=messages,
+            created_at=created_at or datetime.now(),
+            last_active=last_active or datetime.now(),
+        )
+
+        self.sessions[session_id] = session
+        self.audio_queues[session_id] = asyncio.Queue(maxsize=10)
+
+        # 建立角色→会话的索引（append 保持 DESC 顺序）
+        if character_id not in self.character_sessions:
+            self.character_sessions[character_id] = deque()
+        self.character_sessions[character_id].append(session_id)
+
+        if character_id not in self.character_order:
+            self.character_order.append(character_id)
+
+        return session
+
     def get_session_count(self) -> int:
         """获取当前活跃会话数"""
         return len(self.sessions)

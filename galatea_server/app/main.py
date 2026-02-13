@@ -8,7 +8,7 @@ Galatea Server - AI Desktop Pet Backend
 - 路由注册
 - 静态文件服务
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.events import lifespan
 from app.core.config import settings
@@ -17,7 +17,8 @@ from app.core.startup import print_startup_banner, print_available_endpoints
 from app.core.static_files import mount_static_files
 from app.core.exception_handler import register_exception_handlers
 from app.api.v1.api_router import api_router
-from app.core.container import tts_server
+from app.api.deps import get_tts_server
+from app.infrastructure.processes.tts_server import TTSServer
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description="AI Desktop Pet Backend Service with WebSocket support",
     version="1.0.0",
-    lifespan=lifespan  # TODO: 启用生命周期管理
+    lifespan=lifespan
 )
 
 # ==================== 中间件配置 ====================
@@ -55,7 +56,7 @@ mount_static_files(app)
 # ==================== 健康检查端点 ====================
 
 @app.get("/", tags=["Health"])
-def health_check():
+def health_check(tts_server: TTSServer = Depends(get_tts_server)):
     """服务健康检查"""
     return {
         "status": "running",

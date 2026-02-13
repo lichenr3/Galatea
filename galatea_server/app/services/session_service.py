@@ -1,13 +1,14 @@
 from app.infrastructure.managers.session_manager import SessionManager
 from app.infrastructure.managers.character_registry import CharacterRegistry
 from app.infrastructure.managers.unity_connection import UnityConnectionManager
+from app.repositories.session_repo import SessionRepository
+from app.repositories.message_repo import MessageRepository
 from app.schemas.session import *
 from app.schemas.common import UnifiedResponse
 from app.core.logger import get_logger
 from app.utils.path_utils import resolve_static_url
 from app.schemas.tts import SwitchTTSModelRequest
 from app.services.tts_model_service import switch_tts_model_service
-import uuid
 import asyncio
 
 logger = get_logger(__name__)
@@ -32,11 +33,14 @@ async def create_session_service(
     request: CreateSessionRequest,
     session_manager: SessionManager,
     character_registry: CharacterRegistry,
-    unity_manager: UnityConnectionManager
+    unity_manager: UnityConnectionManager,
+    session_repo: SessionRepository,
+    message_repo: MessageRepository,
 ) -> UnifiedResponse[CreateSessionResponse]:
     """创建新的会话服务实例"""
     character_id = request.character_id
-    session_id = str(uuid.uuid4())
+    db_id: int | None = None
+    session_id: str = ""
     created = False
 
     try:
@@ -49,13 +53,21 @@ async def create_session_service(
             logger.error(f"❌ 角色配置非法: {character_id}")
             return UnifiedResponse(code=400, message=f"角色 {character_id} 配置非法", data=None)
 
-        # 创建会话
-        session_manager.create_session(
+        # 先持久化到数据库，拿到自增 ID
+        db_id = await session_repo.create(character_id)
+        session_id = str(db_id)
+
+        # 创建会话（内存，用 str(id) 作为 key）
+        session = session_manager.create_session(
             session_id=session_id, 
             character_id=character_id,
             language=request.language
         )
         created = True
+
+        # 保存 system prompt 到消息表
+        if session.history:
+            await message_repo.save(db_id, "system", session.history[0]["content"])
 
         # 🆕 异步切换 TTS 模型（不阻塞会话创建）
         logger.info(f"🎤 准备异步切换 TTS 模型到角色: {character_id}")
@@ -83,21 +95,33 @@ async def create_session_service(
         return UnifiedResponse.success(message="创建会话成功", data=response_data)
 
     except Exception as e:
-        # 如果在创建后发生异常，回滚已创建的会话
+        # 回滚：删除内存中已创建的会话
         if created:
             try:
                 session_manager.remove_session(session_id)
-                logger.warning(f"⚠️ 已回滚会话: {session_id}")
+                logger.warning(f"⚠️ 已回滚内存会话: {session_id}")
             except Exception as rollback_error:
-                logger.error(f"❌ 回滚会话失败: {rollback_error}")
+                logger.error(f"❌ 回滚内存会话失败: {rollback_error}")
+        # 回滚：删除 DB 中已创建的记录
+        if db_id is not None:
+            try:
+                await session_repo.delete(db_id)
+                logger.warning(f"⚠️ 已回滚数据库会话: {db_id}")
+            except Exception as rollback_error:
+                logger.error(f"❌ 回滚数据库会话失败: {rollback_error}")
         
         logger.error(f"❌ 创建会话失败: {e}", exc_info=True)
         return UnifiedResponse(code=500, message=f"创建会话失败: {str(e)}", data=None)
     
-def delete_session_service(session_id: str, session_manager: SessionManager) -> UnifiedResponse[bool]:
+async def delete_session_service(
+    session_id: str,
+    session_manager: SessionManager,
+    session_repo: SessionRepository,
+) -> UnifiedResponse[bool]:
     """删除会话服务实例"""
     try:
         session_manager.remove_session(session_id)
+        await session_repo.delete(int(session_id))
         logger.info(f"✅ 删除会话成功: {session_id}")
         return UnifiedResponse.success(message="删除会话成功", data=True)
 

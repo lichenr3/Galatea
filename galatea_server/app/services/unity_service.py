@@ -1,11 +1,11 @@
-from app.core.container import unity_process
+from app.infrastructure.processes.unity_process import UnityProcess
 from app.schemas.common import UnifiedResponse
 from app.schemas.unity_protocol import UnityActionResponse, UnityStatusResponse
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-def launch_unity_service() -> UnifiedResponse[UnityActionResponse]:
+def launch_unity_service(unity_process: UnityProcess) -> UnifiedResponse[UnityActionResponse]:
     """启动 Unity 客户端服务"""
     try:
         result = unity_process.start()
@@ -35,7 +35,7 @@ def launch_unity_service() -> UnifiedResponse[UnityActionResponse]:
             data=None
         )
 
-def shutdown_unity_service() -> UnifiedResponse[UnityActionResponse]:
+def shutdown_unity_service(unity_process: UnityProcess) -> UnifiedResponse[UnityActionResponse]:
     """关闭 Unity 客户端服务"""
     try:
         result = unity_process.stop()
@@ -61,7 +61,7 @@ def shutdown_unity_service() -> UnifiedResponse[UnityActionResponse]:
             data=None
         )
 
-def get_unity_status_service() -> UnifiedResponse[UnityStatusResponse]:
+def get_unity_status_service(unity_process: UnityProcess) -> UnifiedResponse[UnityStatusResponse]:
     """获取 Unity 客户端状态服务"""
     try:
         status = unity_process.get_status()

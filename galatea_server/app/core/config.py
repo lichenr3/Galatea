@@ -32,6 +32,23 @@ class Settings:
     # Unity settings
     UNITY_EXE_PATH: str = os.getenv("UNITY_EXE_PATH", "../galatea_unity/Build/galatea.exe")
 
+    # Database (PostgreSQL + pgvector)
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
+    POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", 5432))
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "galatea")
+
+    @property
+    def DATABASE_URL(self) -> str:
+        """asyncpg 连接字符串（用于 SQLAlchemy async）"""
+        return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def DATABASE_URL_PSYCOPG(self) -> str:
+        """psycopg 连接字符串（用于 LangGraph Checkpointer / langchain-postgres）"""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
     # CORS settings
     CORS_ORIGINS: list = [
         "http://localhost:5173",

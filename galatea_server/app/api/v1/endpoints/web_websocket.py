@@ -1,6 +1,9 @@
 """Web 客户端专用 WebSocket 端点"""
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from app.api.deps import get_web_manager, get_session_manager
+from app.api.deps import (
+    get_web_manager, get_session_manager, get_chat_graph, get_tts_service,
+    get_message_repo, get_session_repo,
+)
 from app.schemas.web_protocol import (
     WebClientMessage, WebServerMessage, WebClientMessageType, WebServerMessageType,
     UserMessagePayload, AITextStreamPayload, AIStatusPayload,
@@ -8,6 +11,9 @@ from app.schemas.web_protocol import (
 )
 from app.infrastructure.managers.web_connection import WebConnectionManager
 from app.infrastructure.managers.session_manager import SessionManager
+from app.services.tts_service import TTSService
+from app.repositories.message_repo import MessageRepository
+from app.repositories.session_repo import SessionRepository
 from app.services.agent_service import handle_user_message
 from app.exceptions.base import GalateaException
 from app.core.logger import get_logger
@@ -23,7 +29,11 @@ router = APIRouter()
 async def web_websocket_endpoint(
     websocket: WebSocket,
     session_manager: SessionManager = Depends(get_session_manager),
-    web_connection_manager: WebConnectionManager  = Depends(get_web_manager)
+    web_connection_manager: WebConnectionManager = Depends(get_web_manager),
+    chat_graph = Depends(get_chat_graph),
+    tts_service: TTSService = Depends(get_tts_service),
+    message_repo: MessageRepository = Depends(get_message_repo),
+    session_repo: SessionRepository = Depends(get_session_repo),
 ):
     """Web 客户端 WebSocket 连接端点"""
     await web_connection_manager.connect(websocket)
@@ -46,7 +56,7 @@ async def web_websocket_endpoint(
             if msg.type == WebClientMessageType.USER_MESSAGE:
                 try:
                     # 使用生成器处理流式响应
-                    async for response_msg in handle_user_message(msg.session_id, session_manager, msg):
+                    async for response_msg in handle_user_message(msg.session_id, session_manager, chat_graph, tts_service, message_repo, session_repo, msg):
                         await web_connection_manager.send_to_client(websocket, response_msg)
                     logger.info(f"✅ 完成处理用户消息 (会话: {msg.session_id})")
                 except GalateaException as e:

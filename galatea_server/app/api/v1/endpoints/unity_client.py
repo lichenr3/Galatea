@@ -8,22 +8,25 @@ from app.schemas.common import UnifiedResponse
 from app.schemas.unity_protocol import UnityActionResponse, UnityStatusResponse
 from app.schemas.unity import LaunchUnityRequest, SwitchCharacterRequest
 from app.services.unity_service import launch_unity_service, shutdown_unity_service, get_unity_status_service
-from app.api.deps import get_unity_manager
+from app.api.deps import get_unity_manager, get_unity_process
 from app.infrastructure.managers.unity_connection import UnityConnectionManager
+from app.infrastructure.processes.unity_process import UnityProcess
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
 @router.get("/status", response_model=UnifiedResponse[UnityStatusResponse])
-async def get_unity_status():
+async def get_unity_status(
+    unity_process: UnityProcess = Depends(get_unity_process)
+):
     """获取 Unity 进程状态
     
     Returns:
         UnifiedResponse[UnityStatusResponse]: Unity 运行状态信息
     """
     try:
-        return get_unity_status_service()
+        return get_unity_status_service(unity_process)
     except Exception as e:
         raise e
 
@@ -31,7 +34,8 @@ async def get_unity_status():
 @router.post("/launch", response_model=UnifiedResponse[UnityActionResponse])
 async def launch_unity(
     request: LaunchUnityRequest = LaunchUnityRequest(),
-    unity_manager: UnityConnectionManager = Depends(get_unity_manager)
+    unity_manager: UnityConnectionManager = Depends(get_unity_manager),
+    unity_process: UnityProcess = Depends(get_unity_process),
 ):
     """启动 Unity 客户端
     
@@ -56,14 +60,16 @@ async def launch_unity(
         logger.info("🔵 Received request to launch Unity (no character specified)")
     
     try:
-        result = launch_unity_service()
+        result = launch_unity_service(unity_process)
         return result
     except Exception as e:
         raise e
 
 
 @router.post("/shutdown", response_model=UnifiedResponse[UnityActionResponse])
-async def shutdown_unity():
+async def shutdown_unity(
+    unity_process: UnityProcess = Depends(get_unity_process)
+):
     """关闭 Unity 客户端
     
     Returns:
@@ -71,7 +77,7 @@ async def shutdown_unity():
     """
     logger.info("🔴 Received request to shutdown Unity")
     try:
-        return shutdown_unity_service()
+        return shutdown_unity_service(unity_process)
     except Exception as e:
         raise e
 
