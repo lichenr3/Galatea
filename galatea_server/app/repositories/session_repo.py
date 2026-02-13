@@ -46,6 +46,14 @@ class SessionRepository:
             )
             await session.commit()
 
+    async def get_character_id(self, session_id: int) -> str | None:
+        """根据会话 ID 获取角色 ID，不存在返回 None"""
+        async with self._sf() as session:
+            result = await session.execute(
+                select(DBSession.character_id).where(DBSession.id == session_id)
+            )
+            return result.scalar_one_or_none()
+
     async def get_all_ordered(self) -> list[DBSession]:
         """
         获取所有会话，按 last_active 降序排列（最近的在前）。

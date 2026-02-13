@@ -1,4 +1,3 @@
-from app.infrastructure.managers.session_manager import SessionManager
 from app.infrastructure.managers.character_registry import CharacterRegistry
 from app.infrastructure.managers.unity_connection import UnityConnectionManager
 from app.repositories.session_repo import SessionRepository
@@ -7,6 +6,7 @@ from app.schemas.session import *
 from app.schemas.common import UnifiedResponse
 from app.core.logger import get_logger
 from app.utils.path_utils import resolve_static_url
+from app.utils.prompts import load_persona
 from app.schemas.tts import SwitchTTSModelRequest
 from app.services.tts_model_service import switch_tts_model_service
 import asyncio
@@ -31,7 +31,6 @@ async def _switch_tts_model_in_background(request: SwitchTTSModelRequest, charac
 
 async def create_session_service(
     request: CreateSessionRequest,
-    session_manager: SessionManager,
     character_registry: CharacterRegistry,
     unity_manager: UnityConnectionManager,
     session_repo: SessionRepository,
@@ -40,8 +39,6 @@ async def create_session_service(
     """创建新的会话服务实例"""
     character_id = request.character_id
     db_id: int | None = None
-    session_id: str = ""
-    created = False
 
     try:
         if not character_registry.character_exists(character_id):
@@ -53,33 +50,20 @@ async def create_session_service(
             logger.error(f"❌ 角色配置非法: {character_id}")
             return UnifiedResponse(code=400, message=f"角色 {character_id} 配置非法", data=None)
 
-        # 先持久化到数据库，拿到自增 ID
+        # 持久化到数据库，拿到自增 ID
         db_id = await session_repo.create(character_id)
         session_id = str(db_id)
 
-        # 创建会话（内存，用 str(id) 作为 key）
-        session = session_manager.create_session(
-            session_id=session_id, 
-            character_id=character_id,
-            language=request.language
-        )
-        created = True
+        # 生成 system prompt 并保存到消息表
+        persona = load_persona(character_id, character_registry, language=request.language)
+        await message_repo.save(db_id, "system", persona)
 
-        # 保存 system prompt 到消息表
-        if session.history:
-            await message_repo.save(db_id, "system", session.history[0]["content"])
-
-        # 🆕 异步切换 TTS 模型（不阻塞会话创建）
+        # 异步切换 TTS 模型（不阻塞会话创建）
         logger.info(f"🎤 准备异步切换 TTS 模型到角色: {character_id}")
         tts_switch_request = SwitchTTSModelRequest(character_id=character_id)
-        
-        # 使用 asyncio.create_task 在后台执行，不等待结果
         asyncio.create_task(_switch_tts_model_in_background(tts_switch_request, character_registry))
 
-        # 注意：不在这里切换角色，而是在启动 Unity 时传递角色 ID
-        # 避免 Unity 未启动时消息丢失
-
-        # 使用工具函数优雅地解析头像 URL
+        # 解析头像 URL
         avatar_path = gala_info.avatar.image if gala_info.avatar else ""
         avatar_url = resolve_static_url(avatar_path)
         
@@ -90,18 +74,10 @@ async def create_session_service(
         
         logger.info(f"✅ 创建会话成功: {session_id}")
         
-        # 返回统一格式的响应
         response_data = CreateSessionResponse(session_id=session_id, avatar_url=avatar_url)
         return UnifiedResponse.success(message="创建会话成功", data=response_data)
 
     except Exception as e:
-        # 回滚：删除内存中已创建的会话
-        if created:
-            try:
-                session_manager.remove_session(session_id)
-                logger.warning(f"⚠️ 已回滚内存会话: {session_id}")
-            except Exception as rollback_error:
-                logger.error(f"❌ 回滚内存会话失败: {rollback_error}")
         # 回滚：删除 DB 中已创建的记录
         if db_id is not None:
             try:
@@ -115,12 +91,10 @@ async def create_session_service(
     
 async def delete_session_service(
     session_id: str,
-    session_manager: SessionManager,
     session_repo: SessionRepository,
 ) -> UnifiedResponse[bool]:
     """删除会话服务实例"""
     try:
-        session_manager.remove_session(session_id)
         await session_repo.delete(int(session_id))
         logger.info(f"✅ 删除会话成功: {session_id}")
         return UnifiedResponse.success(message="删除会话成功", data=True)
@@ -130,29 +104,34 @@ async def delete_session_service(
         return UnifiedResponse(code=500, message=f"删除会话失败: {str(e)}", data=None)
 
 
-def get_contacts_service(
-    session_manager: SessionManager,
+async def get_contacts_service(
+    session_repo: SessionRepository,
+    message_repo: MessageRepository,
     character_registry: CharacterRegistry,
     language: str = "zh"
 ) -> UnifiedResponse[ContactsResponse]:
     """
-    获取通讯录（按角色分组的会话列表）
+    获取通讯录（按角色分组的会话列表）— 完全从 DB 读取
     
     返回格式：
-    - 角色按最近交互排序
+    - 角色按最近交互排序（由 DB last_active 决定）
     - 每个角色下的会话也按最近交互排序
     
     Args:
         language: 语言代码（zh/en），用于返回对应语言的角色名称
     """
     try:
-        # 获取按角色分组的会话
-        contacts_dict = session_manager.get_contacts_grouped_by_character()
-        
+        # 从 DB 获取所有会话（已按 last_active DESC 排序）
+        db_sessions = await session_repo.get_all_ordered()
+
+        # 按角色分组（保持插入顺序 = 最近交互在前）
+        grouped: dict[str, list] = {}
+        for db_sess in db_sessions:
+            grouped.setdefault(db_sess.character_id, []).append(db_sess)
+
         contacts = []
-        
-        # 按角色顺序构建响应
-        for character_id, sessions in contacts_dict.items():
+
+        for character_id, sessions in grouped.items():
             # 获取角色信息
             gala_info = character_registry.get_character(character_id)
             if not gala_info:
@@ -168,14 +147,14 @@ def get_contacts_service(
             
             # 构建会话信息列表
             session_infos = []
-            for session in sessions:
+            for db_sess in sessions:
+                msg_count = await message_repo.count_by_session(db_sess.id)
                 session_infos.append(SessionInfo(
-                    session_id=session.session_id,
-                    last_active=session.last_active.isoformat(),
-                    message_count=len(session.history) - 1  # 减去 system prompt
+                    session_id=str(db_sess.id),
+                    last_active=db_sess.last_active.isoformat(),
+                    message_count=msg_count
                 ))
             
-            # 添加角色联系人
             contacts.append(CharacterContact(
                 character_id=character_id,
                 character_name=character_name,
@@ -193,25 +172,25 @@ def get_contacts_service(
         return UnifiedResponse(code=500, message=f"获取通讯录失败: {str(e)}", data=None)
 
 
-def get_history_service(
+async def get_history_service(
     session_id: str,
-    session_manager: SessionManager
+    message_repo: MessageRepository,
 ) -> UnifiedResponse[GetHistoryResponse]:
-    """获取会话历史记录"""
+    """获取会话历史记录（从 DB 读取）"""
     try:
-        if session_id not in session_manager.sessions:
-            return UnifiedResponse(code=404, message=f"会话 {session_id} 不存在", data=None)
-        
-        session = session_manager.sessions[session_id]
-        history = session.get_messages()
-        
-        # 转换格式
+        db_session_id = int(session_id)
+        db_messages = await message_repo.get_by_session(db_session_id)
+
+        if not db_messages:
+            return UnifiedResponse(code=404, message=f"会话 {session_id} 不存在或无消息", data=None)
+
+        # 只返回 user / assistant 消息（过滤 system prompt）
         chat_messages = [
-            ChatMessage(role=msg["role"], content=msg["content"]) 
-            for msg in history 
-            if msg["role"] in {"user", "assistant"}
+            ChatMessage(role=msg.role, content=msg.content)
+            for msg in db_messages
+            if msg.role in {"user", "assistant"}
         ]
-        
+
         return UnifiedResponse.success(
             message="获取历史记录成功",
             data=GetHistoryResponse(session_id=session_id, history=chat_messages)

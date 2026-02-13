@@ -1,7 +1,7 @@
 """
 Message Repository — 消息表的数据访问层
 """
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from app.models.message import DBMessage
 from app.core.logger import get_logger
@@ -33,6 +33,16 @@ class MessageRepository:
                 .order_by(DBMessage.created_at.asc())
             )
             return list(result.scalars().all())
+
+    async def count_by_session(self, session_id: int) -> int:
+        """获取某个会话的消息数量（不含 system prompt）"""
+        async with self._sf() as session:
+            result = await session.execute(
+                select(func.count())
+                .select_from(DBMessage)
+                .where(DBMessage.session_id == session_id, DBMessage.role != "system")
+            )
+            return result.scalar_one()
 
     async def get_recent_with_system(self, session_id: int, limit: int = 20) -> list[DBMessage]:
         """

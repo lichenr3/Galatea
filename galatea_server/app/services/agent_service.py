@@ -2,11 +2,11 @@
 Agent Service — 处理用户消息的核心业务逻辑
 
 使用 LangGraph 编排 LLM 对话流程，通过 stream_mode="messages" 实现 token 级流式输出。
-Checkpointer 自动持久化对话状态；同时保留 message_repo 双写以支持自定义查询。
+Graph 为无状态模式（不使用 checkpointer），每次调用从 DB 加载完整历史。
+消息持久化由 message_repo / session_repo 负责，不依赖任何内存状态。
 """
 
 from app.schemas.web_protocol import *
-from app.infrastructure.managers.session_manager import SessionManager
 from app.services.tts_service import TTSService
 from app.repositories.message_repo import MessageRepository
 from app.repositories.session_repo import SessionRepository
@@ -15,7 +15,8 @@ from app.exceptions.base import InvalidDataException
 from app.utils.text_buffer import TextBuffer
 from app.exceptions.session import SessionNotFoundException
 from app.exceptions.llm import LLMException
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, AIMessageChunk
+from app.agents.base import BaseAgent
+from app.utils.message_utils import convert_db_messages_to_langchain
 import time
 import uuid
 import asyncio
@@ -45,25 +46,9 @@ def create_text_stream_message(text: str, is_finish: bool, message_id: str) -> W
     )
 
 
-def _convert_history_to_langchain(history: list[dict]) -> list:
-    """将 session_manager 的 dict 格式历史转为 langchain Message 对象"""
-    messages = []
-    for msg in history:
-        role = msg["role"]
-        content = msg["content"]
-        if role == "system":
-            messages.append(SystemMessage(content=content))
-        elif role == "user":
-            messages.append(HumanMessage(content=content))
-        elif role == "assistant":
-            messages.append(AIMessage(content=content))
-    return messages
-
-
 async def handle_user_message(
     session_id: str,
-    session_manager: SessionManager,
-    chat_graph,  # CompiledStateGraph — LangGraph 编译后的图
+    agent: BaseAgent,
     tts_service: TTSService,
     message_repo: MessageRepository,
     session_repo: SessionRepository,
@@ -73,11 +58,11 @@ async def handle_user_message(
     处理用户聊天消息（异步生成器，用于流式响应）
 
     流程：
-    1. 验证输入 & 获取会话
-    2. 构建 LangGraph 输入（首次消息含 system prompt，后续仅含新消息）
-    3. 通过 graph.astream(stream_mode="messages") 获取 token 级流式输出
+    1. 验证输入 & 从 DB 查询会话
+    2. 保存用户消息到 DB → 从 DB 加载完整历史（滑动窗口）→ 转为 langchain Message
+    3. 通过 agent.astream_chat() 获取 token 级流式输出
     4. 实时发送文本 + TTS 处理
-    5. 持久化消息到自定义 messages 表（checkpointer 同时自动持久化图状态）
+    5. 保存 AI 回复到 DB
 
     Raises:
         InvalidDataException: 当消息内容为空时
@@ -93,38 +78,21 @@ async def handle_user_message(
 
     logger.info(f"📩 用户消息: {user_text[:50]}... (音频: {'开启' if enable_audio else '关闭'})")
 
-    # 获取并验证会话
-    session = session_manager.get_session(session_id)
-    if session is None:
+    # 从 DB 验证会话并获取角色 ID
+    db_session_id = int(session_id)
+    character_id = await session_repo.get_character_id(db_session_id)
+    if character_id is None:
         raise SessionNotFoundException(message=f"会话 {session_id} 不存在或已过期")
-
-    session_manager.move_to_front(session_id)
 
     # 通知前端 AI 开始思考
     yield create_status_message("thinking", "思考中...")
 
-    # ---- 构建 LangGraph 输入 ----
-    graph_config = {"configurable": {"thread_id": session_id}}
-
-    # 检查 checkpointer 是否已有该会话的状态
-    state_snapshot = await chat_graph.aget_state(graph_config)
-    has_graph_state = bool(state_snapshot.values and state_snapshot.values.get("messages"))
-
-    if not has_graph_state:
-        # 首次调用（新会话或重启后恢复的会话）：
-        # 将 session_manager 中的完整历史转为 langchain 消息，
-        # 附加新的用户消息一起传入，让 checkpointer 建立初始状态。
-        input_messages = _convert_history_to_langchain(session.history)
-        input_messages.append(HumanMessage(content=user_text))
-        logger.info(f"🔄 初始化图状态 (历史消息: {len(input_messages) - 1} 条 + 新消息)")
-    else:
-        # 后续调用：checkpointer 自动加载历史，只需传入新消息
-        input_messages = [HumanMessage(content=user_text)]
-
-    # 记录用户消息（内存 + 自定义 DB 表）
-    db_session_id = int(session_id)
-    session.add_message("user", user_text)
+    # ---- 保存用户消息到 DB ----
     await message_repo.save(db_session_id, "user", user_text)
+
+    # ---- 从 DB 加载完整历史（system prompt + 最近 N 条，含刚存的用户消息）----
+    db_messages = await message_repo.get_recent_with_system(db_session_id, limit=20)
+    input_messages = convert_db_messages_to_langchain(db_messages)
 
     # 初始化流式处理所需的状态
     message_id = str(uuid.uuid4())
@@ -138,33 +106,26 @@ async def handle_user_message(
     if enable_audio:
         logger.info("🔊 音频已启用，启动 TTS 处理任务")
         tts_task = asyncio.create_task(
-            tts_service.process_queue(tts_queue, session.character)
+            tts_service.process_queue(tts_queue, character_id)
         )
     else:
         logger.info("🔇 音频已禁用，跳过 TTS 生成")
 
     try:
-        # ---- LangGraph 流式生成 ----
-        async for msg_chunk, metadata in chat_graph.astream(
-            {"messages": input_messages},
-            config=graph_config,
-            stream_mode="messages",
-        ):
-            # 只处理 AI 生成的 token（过滤掉输入消息等其他事件）
-            if isinstance(msg_chunk, AIMessageChunk) and msg_chunk.content:
-                text_chunk = msg_chunk.content
-                full_response += text_chunk
+        # ---- Agent 流式生成 ----
+        async for text_chunk in agent.astream_chat(input_messages):
+            full_response += text_chunk
 
-                # 实时发送文本片段到前端
-                yield create_text_stream_message(text_chunk, is_finish=False, message_id=message_id)
+            # 实时发送文本片段到前端
+            yield create_text_stream_message(text_chunk, is_finish=False, message_id=message_id)
 
-                # 只在启用音频时检测句子并加入 TTS 队列
-                if enable_audio:
-                    completed_sentences = text_buffer.add_chunk(text_chunk)
-                    for sentence in completed_sentences:
-                        logger.info(f"🎤 检测到完整句子 [{sentence_index}]: {sentence[:30]}...")
-                        await tts_queue.put({"index": sentence_index, "text": sentence})
-                        sentence_index += 1
+            # 只在启用音频时检测句子并加入 TTS 队列
+            if enable_audio:
+                completed_sentences = text_buffer.add_chunk(text_chunk)
+                for sentence in completed_sentences:
+                    logger.info(f"🎤 检测到完整句子 [{sentence_index}]: {sentence[:30]}...")
+                    await tts_queue.put({"index": sentence_index, "text": sentence})
+                    sentence_index += 1
 
         logger.info(f"✅ LLM 回复完成: {full_response[:50]}...")
 
@@ -181,8 +142,7 @@ async def handle_user_message(
             # 发送结束信号到 TTS 队列
             await tts_queue.put(None)
 
-        # 保存 AI 回复（内存 + 自定义 DB 表；checkpointer 已自动持久化图状态）
-        session.add_message("assistant", full_response)
+        # 保存 AI 回复到 DB
         await message_repo.save(db_session_id, "assistant", full_response)
         await session_repo.update_last_active(db_session_id)
 

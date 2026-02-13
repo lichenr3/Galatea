@@ -8,7 +8,6 @@ Endpoint 通过 get_xxx() + FastAPI Depends() 获取依赖。
 from app.core.config import settings
 from app.infrastructure.managers.web_connection import WebConnectionManager
 from app.infrastructure.managers.unity_connection import UnityConnectionManager
-from app.infrastructure.managers.session_manager import SessionManager
 from app.infrastructure.processes.tts_server import TTSServer
 from app.infrastructure.processes.unity_process import UnityProcess
 from app.infrastructure.managers.character_registry import CharacterRegistry
@@ -24,7 +23,6 @@ _unity_manager: UnityConnectionManager | None = None
 _character_registry: CharacterRegistry | None = None
 _tts_server: TTSServer | None = None
 _unity_process: UnityProcess | None = None
-_session_manager: SessionManager | None = None
 _tts_service: TTSService | None = None
 _llm_service: LLMService | None = None
 
@@ -34,10 +32,9 @@ _session_repo: SessionRepository | None = None
 _message_repo: MessageRepository | None = None
 _memory_repo: MemoryRepository | None = None
 
-# LangGraph
-_checkpointer_conn = None  # psycopg.AsyncConnection
-_checkpointer = None        # AsyncPostgresSaver
-_chat_graph = None           # CompiledStateGraph
+# LangChain / Agent
+_llm = None    # ChatOpenAI — LangChain LLM 客户端单例
+_agent = None  # GalateaAgent — 主聊天 Agent
 
 
 async def init_dependencies() -> None:
@@ -46,9 +43,9 @@ async def init_dependencies() -> None:
     """
     global _web_manager, _unity_manager, _character_registry
     global _tts_server, _unity_process
-    global _session_manager, _tts_service, _llm_service
+    global _tts_service, _llm_service
     global _database, _session_repo, _message_repo, _memory_repo
-    global _checkpointer_conn, _checkpointer, _chat_graph
+    global _llm, _agent
 
     # ---- Database ----
     _database = Database(settings.DATABASE_URL)
@@ -58,31 +55,21 @@ async def init_dependencies() -> None:
     _message_repo = MessageRepository(_database.session_factory)
     _memory_repo = MemoryRepository(_database.session_factory)
 
-    # ---- LangGraph Checkpointer (PostgreSQL) ----
-    from psycopg import AsyncConnection
-    from psycopg.rows import dict_row
-    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-
-    _checkpointer_conn = await AsyncConnection.connect(
-        settings.DATABASE_URL_PSYCOPG,
-        autocommit=True,
-        row_factory=dict_row,
-    )
-    _checkpointer = AsyncPostgresSaver(_checkpointer_conn)
-    await _checkpointer.setup()  # 首次运行时创建 checkpoint 表
-
-    # ---- LangGraph Chat Graph ----
+    # ---- LangChain LLM 客户端 ----
     from langchain_openai import ChatOpenAI
-    from app.graphs.workflow_graph import build_chat_graph
 
-    llm = ChatOpenAI(
+    _llm = ChatOpenAI(
         model=settings.LLM_MODEL,
         api_key=settings.LLM_API_KEY,
         base_url=settings.LLM_BASE_URL,
         temperature=0.7,
         streaming=True,
     )
-    _chat_graph = build_chat_graph(llm, _checkpointer)
+
+    # ---- Agent ----
+    from app.agents import GalateaAgent
+
+    _agent = GalateaAgent(llm=_llm)
 
     # ---- Infrastructure（无依赖）----
     _web_manager = WebConnectionManager()
@@ -94,7 +81,6 @@ async def init_dependencies() -> None:
     _unity_process = UnityProcess()
 
     # ---- Services（依赖 infrastructure）----
-    _session_manager = SessionManager(character_registry=_character_registry)
     _tts_service = TTSService(
         character_registry=_character_registry,
         unity_manager=_unity_manager,
@@ -102,48 +88,14 @@ async def init_dependencies() -> None:
     )
     _llm_service = LLMService()
 
-    # ---- 从 DB 恢复会话到内存 ----
-    await _restore_sessions_from_db()
-
 
 async def shutdown_dependencies() -> None:
     """清理资源。在 app lifespan shutdown 阶段调用。"""
-    if _checkpointer_conn:
-        await _checkpointer_conn.close()
     if _database:
         await _database.close()
 
 
-async def _restore_sessions_from_db() -> None:
-    """从数据库恢复已有会话到内存 SessionManager"""
-    from app.core.logger import get_logger
-    logger = get_logger(__name__)
-
-    db_sessions = await _session_repo.get_all_ordered()  # last_active DESC
-    if not db_sessions:
-        logger.info("🗄️  No sessions to restore from database")
-        return
-
-    for db_session in db_sessions:
-        # 加载该会话的 system prompt + 最近 20 条消息
-        db_messages = await _message_repo.get_recent_with_system(db_session.id, limit=20)
-        messages = [{"role": m.role, "content": m.content} for m in db_messages]
-
-        _session_manager.load_session(
-            session_id=str(db_session.id),  # DB int → 内存 str
-            character_id=db_session.character_id,
-            messages=messages,
-            created_at=db_session.created_at,
-            last_active=db_session.last_active,
-        )
-
-    logger.info(f"✅ Restored {len(db_sessions)} sessions from database")
-
-
 # ---- Dependency provider functions (FastAPI Depends()) ----
-
-def get_session_manager() -> SessionManager:
-    return _session_manager
 
 def get_web_manager() -> WebConnectionManager:
     return _web_manager
@@ -178,6 +130,10 @@ def get_message_repo() -> MessageRepository:
 def get_memory_repo() -> MemoryRepository:
     return _memory_repo
 
-def get_chat_graph():
-    """获取编译后的 LangGraph 聊天图（CompiledStateGraph）"""
-    return _chat_graph
+def get_llm():
+    """获取 LangChain LLM 客户端（ChatOpenAI 单例）"""
+    return _llm
+
+def get_agent():
+    """获取主聊天 Agent（GalateaAgent）"""
+    return _agent
