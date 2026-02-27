@@ -2,6 +2,7 @@ from app.services.session_service import (
     create_session_service,
     delete_session_service,
     get_contacts_service,
+    get_characters_service,
     get_history_service,
 )
 from app.api.deps import get_character_registry, get_session_repo, get_message_repo
@@ -10,7 +11,6 @@ from app.schemas.session import (
     CreateSessionRequest, CreateSessionResponse,
     ContactsResponse,
     GetHistoryResponse,
-    CharactersResponse,
     CharacterInfo,
 )
 from app.schemas.common import UnifiedResponse
@@ -21,33 +21,12 @@ from fastapi import APIRouter, Depends
 router = APIRouter()
 
 
-@router.get("/characters", response_model=UnifiedResponse[CharactersResponse])
+@router.get("/characters", response_model=UnifiedResponse[list[CharacterInfo]])
 def get_characters_endpoint(
     character_registry: CharacterRegistry = Depends(get_character_registry),
 ):
     """获取可用角色列表"""
-    char_ids = character_registry.list_available_characters()
-    
-    characters = []
-    for char_id in char_ids:
-        gala_info = character_registry.get_character(char_id)
-        if gala_info:
-            avatar_url = ""
-            if gala_info.avatar:
-                from app.utils.path_utils import resolve_static_url
-                avatar_url = resolve_static_url(gala_info.avatar.image)
-            
-            characters.append(CharacterInfo(
-                character_id=char_id,
-                name=gala_info.get_name(),
-                description=gala_info.description.get("zh", ""),
-                avatar_url=avatar_url,
-            ))
-    
-    return UnifiedResponse.success(
-        message="获取角色列表成功",
-        data=CharactersResponse(characters=characters)
-    )
+    return get_characters_service(character_registry=character_registry)
 
 
 @router.post("/create", response_model=UnifiedResponse[CreateSessionResponse])

@@ -107,6 +107,54 @@ async def get_contacts_service(
         return UnifiedResponse(code=500, message=f"获取通讯录失败: {str(e)}", data=None)
 
 
+def get_characters_service(
+    character_registry: CharacterRegistry,
+) -> UnifiedResponse[list[CharacterInfo]]:
+    """获取所有可用角色的完整信息（用于角色选择界面）"""
+    try:
+        char_ids = character_registry.list_available_characters()
+        characters = []
+
+        for char_id in char_ids:
+            try:
+                gala_info = character_registry.get_character(char_id)
+                if not gala_info:
+                    continue
+
+                # 解析头像 URL
+                avatar_path = gala_info.avatar.image if gala_info.avatar else ""
+                avatar_url = resolve_static_url(avatar_path)
+
+                # 处理角色名称（兼容字符串和多语言字典）
+                if isinstance(gala_info.name, dict):
+                    name_dict = gala_info.name
+                else:
+                    name_dict = {"zh": gala_info.name, "en": gala_info.display_name or gala_info.name}
+
+                # 处理描述
+                description = gala_info.description if isinstance(gala_info.description, dict) else {"zh": "", "en": ""}
+
+                characters.append(CharacterInfo(
+                    id=char_id,
+                    name=name_dict,
+                    display_name=gala_info.display_name or "",
+                    description=description,
+                    avatar_url=avatar_url or "/images/default_avatar.png",
+                    tags=gala_info.metadata.tags if gala_info.metadata else [],
+                ))
+                logger.info(f"✅ 加载角色: {name_dict.get('zh', char_id)}")
+            except Exception as e:
+                logger.warning(f"⚠️ 跳过角色 {char_id}: {e}")
+                continue
+
+        logger.info(f"✅ 获取角色列表成功，共 {len(characters)} 个角色")
+        return UnifiedResponse.success(message="获取角色列表成功", data=characters)
+
+    except Exception as e:
+        logger.error(f"❌ 获取角色列表失败: {e}", exc_info=True)
+        return UnifiedResponse(code=500, message=f"获取角色列表失败: {str(e)}", data=None)
+
+
 async def get_history_service(
     session_id: str,
     session_repo: SessionRepository,
