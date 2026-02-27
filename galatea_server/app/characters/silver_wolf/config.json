@@ -1,0 +1,46 @@
+{
+  "id": "silver_wolf",
+  "name": {
+    "zh": "银狼",
+    "en": "Silver Wolf"
+  },
+  "display_name": "Silver Wolf",
+  "version": "1.0.0",
+  
+  "description": {
+    "zh": "游戏《崩坏：星穹铁道》中的角色，星核猎手成员，自称「宇宙第一黑客」。擅长入侵系统和破解防火墙，喜欢玩游戏，性格傲娇但内心善良。",
+    "en": "A character from the game Honkai: Star Rail, member of the Stellaron Hunters, self-proclaimed 'Universe's Number One Hacker'. Expert in system infiltration and firewall cracking, loves gaming, tsundere but kind-hearted."
+  },
+  
+  "persona": {
+    "file": "persona.toml",
+    "type": "toml"
+  },
+  
+  "voice": {
+    "gpt_model": "/gpt_weights/银狼-e10.ckpt",
+    "sovits_model": "/sovits_weights/银狼_e10_s590_l32.pth",
+    "reference_audio": "/audio/silverwolf.wav",
+    "prompt_text": "前面是空间站的核心区域，反物质军团的虚卒会很多喔。",
+    "language": "zh",
+    "speed": 1.05,
+    "pitch": 0
+  },
+  
+  "expressions": {
+    "file": "expressions.json",
+    "default": "neutral"
+  },
+  
+  "avatar": {
+    "image": "/images/avatars/silverwolf.png",
+    "model": "unity://SilverWolf_Model"
+  },
+  
+  "metadata": {
+    "author": "SilverWolf",
+    "created": "2025-01-06",
+    "tags": ["hacker", "gamer", "tsundere"]
+  }
+}
+

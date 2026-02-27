@@ -74,7 +74,7 @@ class IdlePayload(BaseModel):
 
 class SwitchCharacterPayload(BaseModel):
     """切换角色载荷"""
-    character_id: str  # 角色ID，如 "yanagi", "SilverWolf"
+    character_id: str  # 角色ID，如 "yanagi", "silver_wolf"
 
 
 # ==================== Unity → Server 反馈 ====================

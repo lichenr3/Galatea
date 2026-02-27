@@ -1,0 +1,121 @@
+{
+  "character_id": "silver_wolf",
+  "character_name": "银狼",
+  "blendshape_version": "1.0.0",
+  "expressions": {
+    "neutral": {
+      "name": "默认",
+      "blendshapes": [],
+      "enable_blush": false
+    },
+    "happy": {
+      "name": "开心",
+      "blendshapes": [
+        {
+          "shape_name": "smile",
+          "weight": 80
+        },
+        {
+          "shape_name": "eyeSmile",
+          "weight": 60
+        }
+      ],
+      "enable_blush": false
+    },
+    "smug": {
+      "name": "得意",
+      "blendshapes": [
+        {
+          "shape_name": "smirk",
+          "weight": 70
+        },
+        {
+          "shape_name": "eyeNarrow",
+          "weight": 40
+        }
+      ],
+      "enable_blush": false
+    },
+    "annoyed": {
+      "name": "不耐烦",
+      "blendshapes": [
+        {
+          "shape_name": "frown",
+          "weight": 50
+        },
+        {
+          "shape_name": "eyebrowFurrow",
+          "weight": 60
+        }
+      ],
+      "enable_blush": false
+    },
+    "surprised": {
+      "name": "惊讶",
+      "blendshapes": [
+        {
+          "shape_name": "eyeWide",
+          "weight": 80
+        },
+        {
+          "shape_name": "mouthOpen",
+          "weight": 40
+        }
+      ],
+      "enable_blush": false
+    },
+    "thinking": {
+      "name": "思考",
+      "blendshapes": [
+        {
+          "shape_name": "eyeNarrow",
+          "weight": 30
+        },
+        {
+          "shape_name": "mouthPout",
+          "weight": 20
+        }
+      ],
+      "enable_blush": false
+    },
+    "embarrassed": {
+      "name": "害羞/尴尬",
+      "blendshapes": [
+        {
+          "shape_name": "blush",
+          "weight": 70
+        },
+        {
+          "shape_name": "eyeClose",
+          "weight": 30
+        }
+      ],
+      "enable_blush": true
+    },
+    "focused": {
+      "name": "专注",
+      "blendshapes": [
+        {
+          "shape_name": "eyeNarrow",
+          "weight": 50
+        },
+        {
+          "shape_name": "serious",
+          "weight": 60
+        }
+      ],
+      "enable_blush": false
+    },
+    "Blink": {
+      "name": "眨眼",
+      "blendshapes": [
+        {
+          "shape_name": "blink",
+          "weight": 100
+        }
+      ],
+      "enable_blush": false
+    }
+  }
+}
+

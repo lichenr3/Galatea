@@ -1,15 +1,17 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import Dict, List
 from datetime import datetime
 
 
 class CreateSessionRequest(BaseModel):
     character_id: str = Field(..., description="角色 ID")
-    language: str = Field("zh", description="会话语言 (zh/en)")
 
 class CreateSessionResponse(BaseModel):
     session_id: str = Field(..., description="会话 ID")
     avatar_url: str = Field(..., description="头像 URL")
+
+class DeleteSessionRequest(BaseModel):
+    session_id: str = Field(..., description="会话 ID")
 
 
 # 通讯录相关 Schema
@@ -51,3 +53,7 @@ class CharacterInfo(BaseModel):
     avatar_url: str = Field(..., description="头像 URL")
     tags: List[str] = Field(default_factory=list, description="角色标签")
 
+
+class CharactersResponse(BaseModel):
+    """角色列表响应"""
+    characters: List[CharacterInfo] = Field(..., description="所有可用角色列表")

@@ -16,9 +16,7 @@ class UserMessagePayload(BaseModel):
     """用户消息载荷"""
     content: str
     # 配合通讯录功能，告诉后端我在跟谁说话
-    target_character_id: Optional[str] = None
-    # 是否启用音频（控制 TTS 生成）
-    enable_audio: bool = True 
+    target_character_id: Optional[str] = None 
 
 # --- 上行消息定义 (后定义 Message) ---
 
@@ -44,9 +42,9 @@ class WebServerMessageType(str, Enum):
     """后端推给前端的类型"""
     AI_TEXT_STREAM = "ai_text_stream" # 流式文本
     AI_STATUS = "ai_status"           # 状态变化
+    AUDIO_CHUNK = "audio_chunk"       # 音频数据块
     HEARTBEAT = "heartbeat"             # 心跳保活
     ERROR = "error"                   # 报错
-    AUDIO_CHUNK = "audio_chunk"       # 音频数据（前端播放）
 
 # --- 下行载荷定义 (先定义 Payload) ---
 
@@ -69,11 +67,11 @@ class ErrorPayload(BaseModel):
     details: Dict[str, Any] = {}
 
 class AudioChunkPayload(BaseModel):
-    """音频数据载荷（前端播放用）"""
-    sentence_index: int              # 句子索引
-    audio_data: str                  # Base64 编码的 WAV 数据
-    sample_rate: int = 32000         # 采样率
-    duration: float                  # 音频时长（秒）
+    """音频数据块载荷"""
+    sentence_index: int
+    audio_data: str  # Base64 编码的音频数据
+    sample_rate: int = 32000
+    duration: float = 0.0
 
 # --- 下行消息定义 (后定义 Message) ---
 
@@ -82,8 +80,8 @@ class WebServerMessage(BaseModel):
     type: WebServerMessageType
     
     # ✨ 改造点：强类型 Union
-    # 这里的 data 必须是这几种 Payload 之一
-    data: Union[AIStatusPayload, AITextStreamPayload, ErrorPayload, AudioChunkPayload, Dict[str, Any]] = Field(
+    # 这里的 data 必须是这三种 Payload 之一
+    data: Union[AIStatusPayload, AITextStreamPayload, ErrorPayload, Dict[str, Any]] = Field(
         ..., 
         description="Payload 数据"
     )

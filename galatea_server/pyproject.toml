@@ -1,7 +1,7 @@
 [project]
 name = "galatea-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI Desktop Pet Backend Service"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -9,10 +9,10 @@ dependencies = [
     "openai>=2.14.0",
     "requests>=2.32.5",
     "uvicorn[standard]>=0.38.0",
+    "pydantic-settings>=2.0.0",
     # Database
     "sqlalchemy[asyncio]>=2.0.0",
     "psycopg[binary]>=3.2.0",
-    "alembic>=1.15.0",
     "pgvector>=0.3.0",
     # LangChain / LangGraph
     "langgraph>=0.2.0",

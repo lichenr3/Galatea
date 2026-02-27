@@ -64,3 +64,26 @@ class SessionRepository:
                 select(DBSession).order_by(DBSession.last_active.desc())
             )
             return list(result.scalars().all())
+
+    async def get_all_grouped_by_character(self) -> dict[str, list[DBSession]]:
+        """获取按角色分组的会话列表，按 last_active 降序"""
+        async with self._sf() as session:
+            result = await session.execute(
+                select(DBSession).order_by(DBSession.last_active.desc())
+            )
+            sessions = list(result.scalars().all())
+            
+            grouped: dict[str, list[DBSession]] = {}
+            for s in sessions:
+                if s.character_id not in grouped:
+                    grouped[s.character_id] = []
+                grouped[s.character_id].append(s)
+            return grouped
+
+    async def get_by_id(self, session_id: int) -> DBSession | None:
+        """根据 ID 获取会话"""
+        async with self._sf() as session:
+            result = await session.execute(
+                select(DBSession).where(DBSession.id == session_id)
+            )
+            return result.scalar_one_or_none()

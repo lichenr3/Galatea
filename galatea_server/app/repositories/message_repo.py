@@ -74,3 +74,14 @@ class MessageRepository:
                 messages.append(system_msg)
             messages.extend(recent_msgs)
             return messages
+
+    async def get_last_message(self, session_id: int) -> DBMessage | None:
+        """获取会话的最后一条非 system 消息"""
+        async with self._sf() as session:
+            result = await session.execute(
+                select(DBMessage)
+                .where(DBMessage.session_id == session_id, DBMessage.role != "system")
+                .order_by(DBMessage.created_at.desc())
+                .limit(1)
+            )
+            return result.scalar_one_or_none()

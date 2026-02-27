@@ -99,7 +99,7 @@ export const deleteSession = async (sessionId: string): Promise<void> => {
     console.log('🗑️ 发起删除会话请求:', { session_id: sessionId });
     
     try {
-        const response = await fetch(`${config.API_URL}/session/delete/${sessionId}`, {
+        const response = await fetch(`${config.API_URL}/session/${sessionId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
