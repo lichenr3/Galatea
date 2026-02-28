@@ -87,3 +87,14 @@ class SessionRepository:
                 select(DBSession).where(DBSession.id == session_id)
             )
             return result.scalar_one_or_none()
+        
+    async def update_last_extracted_index(self, session_id: int, index: int) -> None:
+        """更新会话的最后记忆提取索引"""
+        async with self._sf() as session:
+            await session.execute(
+                update(DBSession)
+                .where(DBSession.id == session_id)
+                .values(last_extracted_index=index)
+            )
+            await session.commit()
+

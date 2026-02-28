@@ -36,19 +36,26 @@ class BaseAgent(ABC):
     async def astream_chat(
         self,
         messages: list[BaseMessage],
+        character_id: str | None = None,
     ) -> AsyncGenerator[str, None]:
         """
         流式聊天：传入完整消息历史，逐 token 返回 AI 回复文本。
 
         Args:
             messages: 完整的 langchain Message 列表（含 system prompt + 历史 + 新消息）
+            character_id: 角色 ID（用于记忆检索等）
 
         Yields:
             str: AI 生成的文本片段（token 级）
         """
+        # 构建 config（用于传递角色 ID 等上下文）
+        config = {}
+        if character_id:
+            config["configurable"] = {"character_id": character_id}
 
         async for msg_chunk, metadata in self.graph.astream(
             {"messages": messages},
+            config=config,
             stream_mode="messages",
         ):
             if isinstance(msg_chunk, AIMessageChunk) and msg_chunk.content:

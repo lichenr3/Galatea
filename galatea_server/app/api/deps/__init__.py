@@ -29,7 +29,11 @@ from app.api.deps.services import (
     get_tts_service,
     get_llm,
     get_agent,
+    get_embeddings,
+    get_mini_llm,
 )
+
+
 
 # 子模块引用（供 init/shutdown 使用）
 from app.api.deps import database as _db_deps
@@ -55,6 +59,12 @@ async def init_dependencies() -> None:
         llm_model=settings.LLM_MODEL,
         llm_api_key=settings.LLM_API_KEY,
         llm_base_url=settings.LLM_BASE_URL,
+        embedding_model=settings.EMBEDDING_MODEL,
+        embedding_api_key=settings.EMBEDDING_API_KEY or settings.LLM_API_KEY,
+        embedding_base_url=settings.EMBEDDING_BASE_URL or settings.LLM_BASE_URL,
+        mini_llm_model=settings.MINI_LLM_MODEL,
+        mini_llm_api_key=settings.MINI_LLM_API_KEY,
+        mini_llm_base_url=settings.MINI_LLM_BASE_URL,
     )
 
 

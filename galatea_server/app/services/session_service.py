@@ -3,6 +3,7 @@ from app.schemas.session import *
 from app.schemas.common import UnifiedResponse
 from app.core.logger import get_logger
 from app.utils.path_utils import resolve_static_url
+from app.utils.prompts import load_persona
 from app.repositories.session_repo import SessionRepository
 from app.repositories.message_repo import MessageRepository
 
@@ -12,6 +13,7 @@ logger = get_logger(__name__)
 async def create_session_service(
     request: CreateSessionRequest,
     session_repo: SessionRepository,
+    message_repo: MessageRepository,
     character_registry: CharacterRegistry,
 ) -> UnifiedResponse[CreateSessionResponse]:
     """创建新会话（数据库）"""
@@ -29,6 +31,11 @@ async def create_session_service(
 
         session_id = await session_repo.create(character_id)
         session_id_str = str(session_id)
+
+        # 保存系统提示词作为第一条消息
+        persona_prompt = load_persona(character_id, character_registry, language="zh")
+        await message_repo.save(int(session_id_str), "system", persona_prompt)
+        logger.info(f"保存角色人设到会话 {session_id_str}")
 
         avatar_path = gala_info.avatar.image if gala_info.avatar else ""
         avatar_url = resolve_static_url(avatar_path)

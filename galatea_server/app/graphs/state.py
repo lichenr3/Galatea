@@ -16,3 +16,4 @@ from langchain_core.messages import BaseMessage
 class AgentState(TypedDict):
     """聊天 Agent 的状态"""
     messages: Annotated[list[BaseMessage], add_messages]
+    memory_context: str  # 检索到的历史记忆（注入到 system prompt）

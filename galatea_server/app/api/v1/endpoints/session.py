@@ -33,12 +33,14 @@ def get_characters_endpoint(
 async def create_session_endpoint(
     request: CreateSessionRequest,
     session_repo: SessionRepository = Depends(get_session_repo),
+    message_repo: MessageRepository = Depends(get_message_repo),
     character_registry: CharacterRegistry = Depends(get_character_registry),
 ):
     """创建新会话"""
     return await create_session_service(
         request=request,
         session_repo=session_repo,
+        message_repo=message_repo,
         character_registry=character_registry,
     )
 

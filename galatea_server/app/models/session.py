@@ -14,3 +14,4 @@ class DBSession(Base):
     character_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     last_active: Mapped[datetime] = mapped_column(default=datetime.now)
+    last_extracted_index: Mapped[int] = mapped_column(default=0)

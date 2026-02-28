@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str = Field(default="", description="LLM Base URL")
     LLM_MODEL: str = Field(default="", description="LLM Model Name")
 
+    # Mini LLM settings (used for query rewrite, memory extraction, etc.)
+    MINI_LLM_API_KEY: str = Field(default="", description="Mini LLM API Key")
+    MINI_LLM_BASE_URL: str = Field(default="", description="Mini LLM Base URL")
+    MINI_LLM_MODEL: str = Field(default="", description="Mini LLM Model Name")
+
+    # Embedding settings (BGE-M3 默认 1024 维)
+    EMBEDDING_API_KEY: str = Field(default="", description="Embedding API Key")
+    EMBEDDING_BASE_URL: str = Field(default="", description="Embedding Base URL")
+    EMBEDDING_MODEL: str = Field(default="BAAI/bge-m3", description="Embedding Model Name")
+
     # Unity settings
     UNITY_EXE_PATH: str = "../galatea_unity/Build/galatea.exe"
 
